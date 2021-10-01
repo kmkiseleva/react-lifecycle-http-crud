@@ -1,0 +1,55 @@
+const http = require("http");
+const Koa = require("koa");
+const Router = require("koa-router");
+const cors = require("koa2-cors");
+const koaBody = require("koa-body");
+
+const app = new Koa();
+
+app.use(cors());
+app.use(koaBody({ json: true }));
+
+const notes = [
+  {
+    id: 1,
+    content:
+      "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima aliquam voluptas architecto consectetur, quasi ab.",
+  },
+  {
+    id: 2,
+    content:
+      "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima aliquam voluptas architecto consectetur, quasi ab.",
+  },
+];
+
+let nextId = 3;
+
+const router = new Router();
+
+router.get("/notes", async (ctx, next) => {
+  ctx.response.body = notes;
+});
+
+router.post("/notes", async (ctx, next) => {
+  let data = JSON.parse(ctx.request.body);
+  console.log(data);
+  notes.push({ ...data, id: nextId++ });
+  ctx.response.body = {
+    status: "ok",
+  };
+});
+
+router.delete("/notes/:id", async (ctx, next) => {
+  const noteId = Number(ctx.params.id);
+  const index = notes.findIndex((o) => o.id === noteId);
+  if (index !== -1) {
+    notes.splice(index, 1);
+  }
+  ctx.response.body = 204;
+});
+
+app.use(router.routes()).use(router.allowedMethods());
+
+const port = process.env.PORT || 7777;
+const server = http.createServer(app.callback());
+server.listen(port, () => console.log("server started"));
